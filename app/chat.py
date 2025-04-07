@@ -1,7 +1,12 @@
+import os
+from pydub import AudioSegment
+from pathlib import Path
+
 from aiogram import Router, F
 from aiogram.types import Message
 
 from app.database.requests import add_user_to_chat, remove_user_from_chat, set_chat
+from app.generators import gpt_voice_to_text
 
 chat = Router()
 
@@ -39,6 +44,29 @@ async def mention_all_users(message: Message):
         text=f'<b>{author.full_name} решил собрать вас всех!</b>\n\nКлоуны {" ".join(pins)}, вас ожидают',
         parse_mode='HTML'
     )
+
+
+@chat.message(F.content_type == 'voice')
+async def voice_to_text(message: Message):
+    Path('voices').mkdir(parents=True, exist_ok=True)
+
+    voice_file = await message.bot.get_file(file_id=message.voice.file_id)
+    voice_path = f'voices/voice-{message.voice.file_unique_id}'
+
+    await message.bot.download_file(file_path=voice_file.file_path, destination=f'{voice_path}.ogg')
+
+    voice_ogg = AudioSegment.from_file(f'{voice_path}.ogg', format='ogg')
+    voice_ogg.export(
+        f'{voice_path}.mp3', format='mp3'
+    )
+
+    os.remove(f'{voice_path}.ogg')
+
+    transcript = await gpt_voice_to_text(f'{voice_path}.mp3')
+
+    await message.reply(text=transcript.text)
+
+    os.remove(f'{voice_path}.mp3')
 
 
 @chat.message()
