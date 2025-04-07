@@ -1,0 +1,20 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment
+.env
+.venv/
+
+# SQLite database
+db.sqlite3
+
+# OS & Editor files
+*.log
+.DS_Store
+
+# Docker
+docker-compose.override.yml
+
+# VS Code
+.vscode/
